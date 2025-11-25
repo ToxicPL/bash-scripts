@@ -1,6 +1,7 @@
 #!/bin/bash
 # Script to monitor disk CPU and RAM usage and send alert if usage exceeds threshold
 # 14.11.2025 - Drive monitoring added
+# 25.11.2025 - Cpu monitoring added
 
 #List of monitored drives
 PARTITION=("/" "/boot")
@@ -13,3 +14,10 @@ for PART in "${PARTITION[@]}"; do
         curl -X POST -H 'Content-type: application/json' --data "{\"content\":\"$MESSAGE\"}" $WEBHOOK_URL
     fi
 done
+
+#CPU usage monitoring
+CPU_USAGE=$(top -bn1 | grep "Cpu(s)" | awk '{print $2 + $4}')
+if ($echo "$CPU_USAGE > 70" | bc -l) ; then
+    MESSAGE="⚠️Warning: CPU usage is at ${CPU_USAGE}%"
+    curl -X POST -H 'Content-type: application/json' --data "{\"content\":\"$MESSAGE\"}" $WEBHOOK_URL
+fi
