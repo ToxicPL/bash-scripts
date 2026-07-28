@@ -18,7 +18,11 @@ node_disk() {
 {"spec":{"nodeName":"$node","containers":[{"name":"c","image":"busybox","command":["chroot","/host","df","-h","/"],"volumeMounts":[{"name":"r","mountPath":"/host"}],"securityContext":{"privileged":true}}],"volumes":[{"name":"r","hostPath":{"path":"/","type":"Directory"}}],"restartPolicy":"Never"}}
 EOF
 )" >/dev/null 2>&1
-    sleep 4
+    for i in $(seq 1 15); do
+      s=$(kubectl get pod "$name" -o jsonpath='{.status.phase}' 2>/dev/null)
+      [ "$s" = "Succeeded" ] || [ "$s" = "Running" ] && break
+      sleep 1
+    done
     kubectl logs "$name" 2>/dev/null | tail -1 | awk '{gsub(/%/,"",$5); print $2, $5}'
     kubectl delete pod "$name" --now >/dev/null 2>&1
   fi
@@ -35,7 +39,11 @@ node_uptime() {
 {"spec":{"nodeName":"$node","containers":[{"name":"c","image":"busybox","command":["chroot","/host","cat","/proc/uptime"],"volumeMounts":[{"name":"r","mountPath":"/host"}],"securityContext":{"privileged":true}}],"volumes":[{"name":"r","hostPath":{"path":"/","type":"Directory"}}],"restartPolicy":"Never"}}
 EOF
 )" >/dev/null 2>&1
-    sleep 3
+    for i in $(seq 1 15); do
+      s=$(kubectl get pod "$name" -o jsonpath='{.status.phase}' 2>/dev/null)
+      [ "$s" = "Succeeded" ] || [ "$s" = "Running" ] && break
+      sleep 1
+    done
     kubectl logs "$name" 2>/dev/null | awk '{d=int($1/86400); h=int(($1%86400)/3600); print d"d "h"h"}'
     kubectl delete pod "$name" --now >/dev/null 2>&1
   fi
